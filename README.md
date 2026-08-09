@@ -1,26 +1,8 @@
-# Simulateur de Croissance Microbienne en Bioréacteur
+Simulateur de croissance microbienne en bioréacteur
+Description
+Ce projet consiste à créer un programme permettant de simuler la croissance de microorganismes dans un bioréacteur. Le but est de voir comment la quantité de biomasse et de substrat évolue au cours du temps en fonction de différents paramètres, comme la vitesse de croissance, la concentration en substrat ou le taux de mortalité.
 
-Ce projet est un simulateur de croissance microbienne dans un bioréacteur, créé dans le but de mieux comprendre et d’étudier la croissance des microorganismes en fonction de différents paramètres.
+Le programme peut fonctionner en mode discontinu (batch) ou en mode continu (chemostat). Il affiche les résultats sous forme de graphiques et de valeurs dans la console. Les résultats peuvent également être enregistrés dans un fichier CSV.
 
-Il permet de voir comment la **biomasse** et le **substrat** évoluent au cours du temps en faisant varier plusieurs paramètres comme :
-
-* le taux de croissance maximal ;
-* la constante de saturation ;
-* le rendement biomasse/substrat ;
-* le taux de maintenance ;
-* le taux de mortalité.
-
-Le programme propose deux modes de culture : **batch** et **chemostat**.
-
-Les résultats sont affichés sous forme de **valeurs numériques et de graphiques**. Les données peuvent également être exportées au format **CSV** pour être analysées plus facilement.
-
-## Technologies utilisées
-
-* Python
-* NumPy
-* Pandas
-* Matplotlib
-
-## Objectif
-
-Ce projet a pour objectif de mettre en pratique des notions de **microbiologie, biotechnologie et cinétique de croissance**, tout en utilisant Python pour réaliser une simulation et analyser les résultats.
+Utilisation
+Le programme demande différents paramètres à l'utilisateur au lancement, puis réalise la simulation et affiche les résultats.
