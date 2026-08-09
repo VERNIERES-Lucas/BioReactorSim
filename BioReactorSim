@@ -1,9 +1,4 @@
-"""
-Script interactif de simulation de bioréacteur avec saisie utilisateur et affichage des résultats quantitatifs.
-"""
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+import csv
 
 
 def demander_parametre(message, defaut, type_valeur=float):
@@ -27,7 +22,11 @@ def main():
     kd = demander_parametre("Taux de mortalité kd (h^-1)", 0.0)
 
     print("\n=== Choix du mode de culture ===")
-    mode = input("Mode de culture ('batch' ou 'chemostat') [défaut: batch] : ").strip().lower()
+    mode = (
+        input("Mode de culture ('batch' ou 'chemostat') [défaut: batch] : ")
+        .strip()
+        .lower()
+    )
     if mode not in ["batch", "chemostat"]:
         mode = "batch"
 
@@ -35,7 +34,9 @@ def main():
     x0 = demander_parametre("Concentration initiale en biomasse X0 (g/L)", 0.1)
     s0 = demander_parametre("Concentration initiale en substrat S0 (g/L)", 10.0)
 
-    t = np.linspace(0, t_end, 400)
+    # Remplacement de numpy.linspace par une liste native Python
+    n_points = 400
+    t = [i * t_end / (n_points - 1) for i in range(n_points)]
     dt = t[1] - t[0]
     X = [x0]
     S = [s0]
@@ -54,7 +55,9 @@ def main():
         mu_vals.append(mu_vals[-1] if mu_vals else 0.0)
     else:
         d = demander_parametre("Taux de dilution D (h^-1)", 0.3)
-        s_in = demander_parametre("Concentration en substrat d'entrée S_in (g/L)", 10.0)
+        s_in = demander_parametre(
+            "Concentration en substrat d'entrée S_in (g/L)", 10.0
+        )
         for i in range(len(t) - 1):
             s_curr = max(0.0, S[-1])
             mu = mu_max * s_curr / (ks + s_curr)
@@ -67,36 +70,37 @@ def main():
         mu_vals.append(mu_vals[-1] if mu_vals else 0.0)
 
     # Affichage des résultats quantitatifs dans la console
-    print("\n" + "="*30)
+    print("\n" + "=" * 30)
     print(f"--- RÉSULTATS DE LA SIMULATION ({mode.upper()}) ---")
-    print("="*30)
+    print("=" * 30)
     print(f"Biomasse finale (X_final) : {X[-1]:.4f} g/L")
     print(f"Substrat résiduel (S_final) : {S[-1]:.4f} g/L")
     print(f"Biomasse maximale atteinte (X_max) : {max(X):.4f} g/L")
     print(f"Substrat minimal (S_min) : {min(S):.4f} g/L")
-    print("="*30)
+    print("=" * 30)
 
-    # Option d'export CSV
-    export_csv = input("Souhaitez-vous exporter les résultats dans un fichier CSV ? (o/n) [défaut: n] : ").strip().lower()
-    if export_csv == 'o':
-        nom_fichier = input("Nom du fichier CSV [défaut: simulation_resultats.csv] : ").strip()
+    # Option d'export CSV avec le module natif csv
+    export_csv = (
+        input(
+            "Souhaitez-vous exporter les résultats dans un fichier CSV ? (o/n)"
+            " [défaut: n] : "
+        )
+        .strip()
+        .lower()
+    )
+    if export_csv == "o":
+        nom_fichier = input(
+            "Nom du fichier CSV [défaut: simulation_resultats.csv] : "
+        ).strip()
         if not nom_fichier:
             nom_fichier = "simulation_resultats.csv"
-        df = pd.DataFrame({"t": t, "X": X, "S": S, "mu": mu_vals})
-        df.to_csv(nom_fichier, index=False)
+        with open(nom_fichier, mode="w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["t", "X", "S", "mu"])
+            for i in range(len(t)):
+                writer.writerow([t[i], X[i], S[i], mu_vals[i]])
         print(f"Fichier exporté avec succès : {nom_fichier}")
 
-    # Affichage graphique des résultats de simulation
-    plt.figure(figsize=(10, 4))
-    plt.plot(t, X, label="Biomasse (X)", color="green")
-    plt.plot(t, S, label="Substrat (S)", color="blue")
-    plt.xlabel("Temps (h)")
-    plt.ylabel("Concentration (g/L)")
-    plt.title(f"Simulation de bioréacteur - Mode : {mode}")
-    plt.legend()
-    plt.grid(alpha=0.3)
-    plt.show()
 
-
-if __name__ == "__main__":
-    main()
+# Exécution directe
+main()
