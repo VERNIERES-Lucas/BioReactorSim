@@ -1,0 +1,102 @@
+"""
+Script interactif de simulation de bioréacteur avec saisie utilisateur et affichage des résultats quantitatifs.
+"""
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def demander_parametre(message, defaut, type_valeur=float):
+    """Demande une valeur à l'utilisateur avec une option par défaut."""
+    s = input(f"{message} [défaut: {defaut}] : ")
+    if s.strip() == "":
+        return defaut
+    try:
+        return type_valeur(s)
+    except ValueError:
+        print(f"Valeur invalide, utilisation de la valeur par défaut : {defaut}")
+        return defaut
+
+
+def main():
+    print("=== Configuration des paramètres cinétiques ===")
+    mu_max = demander_parametre("Taux de croissance maximal mu_max (h^-1)", 0.6)
+    ks = demander_parametre("Constante de saturation Ks (g/L)", 0.2)
+    yxs = demander_parametre("Rendement biomasse/substrat Yxs", 0.5)
+    ms = demander_parametre("Coefficient de maintenance ms (h^-1)", 0.02)
+    kd = demander_parametre("Taux de mortalité kd (h^-1)", 0.0)
+
+    print("\n=== Choix du mode de culture ===")
+    mode = input("Mode de culture ('batch' ou 'chemostat') [défaut: batch] : ").strip().lower()
+    if mode not in ["batch", "chemostat"]:
+        mode = "batch"
+
+    t_end = demander_parametre("Durée de la simulation t_end (h)", 48.0)
+    x0 = demander_parametre("Concentration initiale en biomasse X0 (g/L)", 0.1)
+    s0 = demander_parametre("Concentration initiale en substrat S0 (g/L)", 10.0)
+
+    t = np.linspace(0, t_end, 400)
+    dt = t[1] - t[0]
+    X = [x0]
+    S = [s0]
+    mu_vals = []
+
+    if mode == "batch":
+        for i in range(len(t) - 1):
+            s_curr = max(0.0, S[-1])
+            mu = mu_max * s_curr / (ks + s_curr)
+            mu_eff = max(0.0, mu - kd)
+            mu_vals.append(mu_eff)
+            dX = mu_eff * X[-1] * dt
+            dS = - (mu / yxs + ms) * X[-1] * dt
+            X.append(max(0.0, X[-1] + dX))
+            S.append(max(0.0, S[-1] + dS))
+        mu_vals.append(mu_vals[-1] if mu_vals else 0.0)
+    else:
+        d = demander_parametre("Taux de dilution D (h^-1)", 0.3)
+        s_in = demander_parametre("Concentration en substrat d'entrée S_in (g/L)", 10.0)
+        for i in range(len(t) - 1):
+            s_curr = max(0.0, S[-1])
+            mu = mu_max * s_curr / (ks + s_curr)
+            mu_eff = max(0.0, mu - kd)
+            mu_vals.append(mu_eff)
+            dX = (mu_eff - d) * X[-1] * dt
+            dS = d * (s_in - S[-1]) - (mu / yxs + ms) * X[-1] * dt
+            X.append(max(0.0, X[-1] + dX))
+            S.append(max(0.0, S[-1] + dS))
+        mu_vals.append(mu_vals[-1] if mu_vals else 0.0)
+
+    # Affichage des résultats quantitatifs dans la console
+    print("\n" + "="*30)
+    print(f"--- RÉSULTATS DE LA SIMULATION ({mode.upper()}) ---")
+    print("="*30)
+    print(f"Biomasse finale (X_final) : {X[-1]:.4f} g/L")
+    print(f"Substrat résiduel (S_final) : {S[-1]:.4f} g/L")
+    print(f"Biomasse maximale atteinte (X_max) : {max(X):.4f} g/L")
+    print(f"Substrat minimal (S_min) : {min(S):.4f} g/L")
+    print("="*30)
+
+    # Option d'export CSV
+    export_csv = input("Souhaitez-vous exporter les résultats dans un fichier CSV ? (o/n) [défaut: n] : ").strip().lower()
+    if export_csv == 'o':
+        nom_fichier = input("Nom du fichier CSV [défaut: simulation_resultats.csv] : ").strip()
+        if not nom_fichier:
+            nom_fichier = "simulation_resultats.csv"
+        df = pd.DataFrame({"t": t, "X": X, "S": S, "mu": mu_vals})
+        df.to_csv(nom_fichier, index=False)
+        print(f"Fichier exporté avec succès : {nom_fichier}")
+
+    # Affichage graphique des résultats de simulation
+    plt.figure(figsize=(10, 4))
+    plt.plot(t, X, label="Biomasse (X)", color="green")
+    plt.plot(t, S, label="Substrat (S)", color="blue")
+    plt.xlabel("Temps (h)")
+    plt.ylabel("Concentration (g/L)")
+    plt.title(f"Simulation de bioréacteur - Mode : {mode}")
+    plt.legend()
+    plt.grid(alpha=0.3)
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
